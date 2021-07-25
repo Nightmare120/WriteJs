@@ -25,6 +25,14 @@ var WriteJs = function WriteJs(element) {
     this.delay = 1000;
     this.typingSpeed = 200;
 
+    this.insertValue = function (text) {
+        Array.from(text).forEach(function (char) {
+            var temp = document.createElement("span");
+            temp.innerHTML = char;
+            _this.element.insertBefore(temp, _this.cursor.cursor);
+        });
+    };
+
     this.clear = function () {
         var noOfTextToBeCleared = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
 
@@ -37,19 +45,19 @@ var WriteJs = function WriteJs(element) {
         }
 
         _this.do(function () {
-            _this.clearText(text, noOfTextToBeCleared);
+            _this.clearText(noOfTextToBeCleared);
         });
         _this.addWaiting(noOfTextToBeCleared);
     };
 
-    this.clearText = function (text, noOfTextToBeCleared) {
+    this.clearText = function (noOfTextToBeCleared) {
         var _loop = function _loop(index) {
             var taskEnd = index === noOfTextToBeCleared;
             setTimeout(function () {
+                _this.clearChar();
                 if (taskEnd) {
                     _this.handleTaskEnd();
                 }
-                _this.clearChar(index, text);
             }, _this.getSingleTextWritingTime(index));
         };
 
@@ -58,9 +66,11 @@ var WriteJs = function WriteJs(element) {
         }
     };
 
-    this.clearChar = function (index, text) {
-        _this.element.innerText = text.slice(0, index * -1);
-        _this.cursor.addCursor(_this.element);
+    this.clearChar = function () {
+        _this.element.removeChild(_this.cursor.previousElement());
+        _this.cursor.update();
+        _this.cursor.updateStyle({ animationDuration: "0s" });
+        _this.cursor.update();
     };
 
     this.getText = function () {
@@ -71,21 +81,24 @@ var WriteJs = function WriteJs(element) {
     };
 
     this.write = function (text) {
+        var style = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
+
         _this.tasks.add(_this.getText() + text);
         _this.do(function () {
-            _this.addText(text);
+            _this.addText(text, style);
         });
         _this.addWaiting(text.length);
     };
 
     this.addText = function (text) {
+        var style = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
+
         var _loop2 = function _loop2(index) {
             setTimeout(function () {
-                _this.addChar(text[index]);
+                _this.addChar(text[index], style);
                 if (index + 1 === text.length) {
                     _this.handleTaskEnd();
                 }
-                _this.cursor.addCursor(_this.element);
             }, _this.getSingleTextWritingTime(index));
         };
 
@@ -95,12 +108,21 @@ var WriteJs = function WriteJs(element) {
     };
 
     this.addChar = function (char) {
-        if (char === " ") {
-            _this.cursor.hide();
-            _this.element.innerHTML += "&nbsp;";
-        } else {
-            _this.element.innerText += char;
+        var style = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+
+        var temp = document.createElement("span");
+        if (style) {
+            for (var key in style) {
+                temp.style[key] = style[key];
+            }
         }
+        if (char === " ") {
+            char = "&nbsp;";
+        }
+        _this.cursor.updateStyle({ animationDuration: "0s" });
+        _this.cursor.update();
+        temp.innerHTML = char;
+        _this.element.insertBefore(temp, _this.cursor.cursor);
     };
 
     this.do = function (task) {
@@ -128,6 +150,8 @@ var WriteJs = function WriteJs(element) {
     this.handleTaskEnd = function () {
         _this.tasks.remove();
         _this.handleWaiting();
+        _this.cursor.updateStyle({ animationDuration: "0.7s" });
+        _this.cursor.update();
     };
 
     this.handleWaiting = function () {
@@ -147,6 +171,28 @@ var WriteJs = function WriteJs(element) {
         for (var i = 0; i < times; i++) {
             task();
         }
+    };
+
+    this.loop = function (task) {
+        task();
+        setInterval(function () {
+            task();
+        }, _this.getTimout());
+    };
+
+    this.update = function (toUpdate) {
+        _this.do(function () {
+            toUpdate();
+            _this.cursor.update();
+        });
+    };
+
+    this.moveCursor = function () {
+        _this.tasks.add(_this.getText() + text);
+        _this.do(function () {
+            _this.addText(text, style);
+        });
+        _this.addWaiting(text.length);
     };
 
     this.element = element;
@@ -232,6 +278,53 @@ var _initialiseProps = function _initialiseProps() {
     this.insertStyles = function (cursor) {
         for (var key in _this.style) {
             cursor.style[key] = _this.style[key];
+        }
+    };
+
+    this.update = function () {
+        _this.insertStyles(_this.cursor);
+    };
+
+    this.previousElement = function () {
+        return _this.cursor.previousElementSibling;
+    };
+
+    this.nextElement = function () {
+        return _this.cursor.nextElementSibling;
+    };
+
+    this.moveToStart = function () {};
+
+    this.moveToEnd = function () {};
+
+    this.move = function (index) {
+        var direction = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : "forward";
+
+        if (direction === "forward") {
+            _this.moveForward(index);
+        } else if (direction === "backward") {
+            _this.moveBackward(index);
+        } else {
+            return "Please enter a valid direction";
+        }
+    };
+
+    this.moveForward = function (index) {
+        var parent = _this.parentElement;
+
+        for (var i = 0; i < index; i++) {
+            var next = _this.nextElement();
+            parent.removeChild(next);
+            parent.insertBefore(next, _this.cursor);
+        }
+    };
+
+    this.moveBackward = function (index) {
+        var parent = _this.parentElement;
+        for (var i = 0; i < index; i++) {
+            var prev = _this.previousElement();
+            parent.replaceChild(prev, _this.cursor);
+            parent.insertBefore(_this.cursor, prev);
         }
     };
 };

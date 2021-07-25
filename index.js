@@ -13,6 +13,14 @@ export default class WriteJs {
         this.cursor.addCursor(this.element);
     }
 
+    defaultValue = (text) => {
+        Array.from(text).forEach((char) => {
+            let temp = document.createElement("span");
+            temp.innerHTML = char;
+            this.element.insertBefore(temp, this.cursor.cursor);
+        });
+    };
+
     clear = (noOfTextToBeCleared = null) => {
         let text = this.getText();
         if (!noOfTextToBeCleared) {
@@ -23,26 +31,27 @@ export default class WriteJs {
         }
 
         this.do(() => {
-            this.clearText(text, noOfTextToBeCleared);
+            this.clearText(noOfTextToBeCleared);
         });
         this.addWaiting(noOfTextToBeCleared);
     };
 
-    clearText = (text, noOfTextToBeCleared) => {
+    clearText = (noOfTextToBeCleared) => {
         for (let index = 1; index <= noOfTextToBeCleared; index++) {
             let taskEnd = index === noOfTextToBeCleared;
             setTimeout(() => {
+                this.clearChar();
                 if (taskEnd) {
                     this.handleTaskEnd();
                 }
-                this.clearChar(index, text);
             }, this.getSingleTextWritingTime(index));
         }
     };
 
-    clearChar = (index, text) => {
-        this.element.innerText = text.slice(0, index * -1);
-        this.cursor.addCursor(this.element);
+    clearChar = () => {
+        this.element.removeChild(this.cursor.previousElement());
+        this.cursor.updateStyle({ animationDuration: "0s" });
+        this.cursor.update();
     };
 
     getText = () => {
@@ -52,35 +61,42 @@ export default class WriteJs {
         return this.element.innerText;
     };
 
-    write = (text) => {
+    write = (text, style = null) => {
         this.tasks.add(this.getText() + text);
         this.do(() => {
-            this.addText(text);
+            this.addText(text, style);
         });
         this.addWaiting(text.length);
     };
 
-    addText = (text) => {
+    addText = (text, style = null) => {
         for (let index = 0; index < text.length; index++) {
             setTimeout(() => {
-                this.addChar(text[index]);
+                this.addChar(text[index], style);
                 if (index + 1 === text.length) {
                     this.handleTaskEnd();
                 }
-                this.cursor.addCursor(this.element);
+                // this.cursor.addCursor(this.element);
             }, this.getSingleTextWritingTime(index));
         }
     };
 
-    addChar = (char) => {
-        if (char === " ") {
-            this.cursor.hide();
-            this.element.innerHTML += "&nbsp;";
-        } else {
-            this.element.innerText += char;
+    addChar = (char, style = {}) => {
+        let temp = document.createElement("span");
+        if (style) {
+            for (const key in style) {
+                temp.style[key] = style[key];
+            }
         }
+        if (char === " ") {
+            // this.cursor.hide();
+            char = "&nbsp;";
+        }
+        this.cursor.updateStyle({ animationDuration: "0s" });
+        this.cursor.update();
+        temp.innerHTML = char;
+        this.element.insertBefore(temp, this.cursor.cursor);
     };
-
     do = (task) => {
         let timeout = this.getTimout();
         setTimeout(() => {
@@ -106,6 +122,8 @@ export default class WriteJs {
     handleTaskEnd = () => {
         this.tasks.remove();
         this.handleWaiting();
+        this.cursor.updateStyle({ animationDuration: "0.7s" });
+        this.cursor.update();
     };
     handleWaiting = () => {
         if (this.tasks.empty()) {
@@ -120,6 +138,18 @@ export default class WriteJs {
         for (let i = 0; i < times; i++) {
             task();
         }
+    };
+    loop = (task) => {
+        task();
+        setInterval(() => {
+            task();
+        }, this.getTimout());
+    };
+    update = (toUpdate) => {
+        this.do(() => {
+            toUpdate();
+            this.cursor.update();
+        });
     };
 }
 

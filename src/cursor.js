@@ -55,4 +55,13 @@ export default class Cursor {
             cursor.style[key] = this.style[key];
         }
     };
+    update = () => {
+        this.insertStyles(this.cursor);
+    };
+    previousElement = () => {
+        return this.cursor.previousElementSibling;
+    };
+    nextElement = () => {
+        return this.cursor.nextElementSibling;
+    };
 }
