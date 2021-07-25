@@ -11,6 +11,7 @@ export default class WriteJs {
         this.tasks = new Tasks();
         this.cursor = new Cursor(null, this.element);
         this.cursor.addCursor(this.element);
+        this.addImportantStyleToElement(element);
     }
 
     defaultValue = (text) => {
@@ -19,6 +20,15 @@ export default class WriteJs {
             temp.innerHTML = char;
             this.element.insertBefore(temp, this.cursor.cursor);
         });
+    };
+
+    addImportantStyleToElement = (element = this.element) => {
+        if (element.style.width.length === 0) {
+            element.style.width = "90vw";
+        }
+        element.style.display = "flex";
+        element.style.flexWrap = "wrap";
+        element.style.boxSizing = "border-box";
     };
 
     clear = (noOfTextToBeCleared = null) => {

@@ -18,19 +18,41 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var WriteJs = function WriteJs(element) {
-    var _this = this;
-
     _classCallCheck(this, WriteJs);
+
+    _initialiseProps.call(this);
+
+    this.element = element;
+    this.waiting = 1;
+    this.tasks = new _tasks2.default();
+    this.cursor = new _cursor2.default(null, this.element);
+    this.cursor.addCursor(this.element);
+    this.addImportantStyleToElement(element);
+};
+
+var _initialiseProps = function _initialiseProps() {
+    var _this = this;
 
     this.delay = 1000;
     this.typingSpeed = 200;
 
-    this.insertValue = function (text) {
+    this.defaultValue = function (text) {
         Array.from(text).forEach(function (char) {
             var temp = document.createElement("span");
             temp.innerHTML = char;
             _this.element.insertBefore(temp, _this.cursor.cursor);
         });
+    };
+
+    this.addImportantStyleToElement = function () {
+        var element = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : _this.element;
+
+        if (element.style.width.length === 0) {
+            element.style.width = "90vw";
+        }
+        element.style.display = "flex";
+        element.style.flexWrap = "wrap";
+        element.style.boxSizing = "border-box";
     };
 
     this.clear = function () {
@@ -68,7 +90,6 @@ var WriteJs = function WriteJs(element) {
 
     this.clearChar = function () {
         _this.element.removeChild(_this.cursor.previousElement());
-        _this.cursor.update();
         _this.cursor.updateStyle({ animationDuration: "0s" });
         _this.cursor.update();
     };
@@ -186,20 +207,6 @@ var WriteJs = function WriteJs(element) {
             _this.cursor.update();
         });
     };
-
-    this.moveCursor = function () {
-        _this.tasks.add(_this.getText() + text);
-        _this.do(function () {
-            _this.addText(text, style);
-        });
-        _this.addWaiting(text.length);
-    };
-
-    this.element = element;
-    this.waiting = 1;
-    this.tasks = new _tasks2.default();
-    this.cursor = new _cursor2.default(null, this.element);
-    this.cursor.addCursor(this.element);
 };
 
 exports.default = WriteJs;
@@ -291,41 +298,6 @@ var _initialiseProps = function _initialiseProps() {
 
     this.nextElement = function () {
         return _this.cursor.nextElementSibling;
-    };
-
-    this.moveToStart = function () {};
-
-    this.moveToEnd = function () {};
-
-    this.move = function (index) {
-        var direction = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : "forward";
-
-        if (direction === "forward") {
-            _this.moveForward(index);
-        } else if (direction === "backward") {
-            _this.moveBackward(index);
-        } else {
-            return "Please enter a valid direction";
-        }
-    };
-
-    this.moveForward = function (index) {
-        var parent = _this.parentElement;
-
-        for (var i = 0; i < index; i++) {
-            var next = _this.nextElement();
-            parent.removeChild(next);
-            parent.insertBefore(next, _this.cursor);
-        }
-    };
-
-    this.moveBackward = function (index) {
-        var parent = _this.parentElement;
-        for (var i = 0; i < index; i++) {
-            var prev = _this.previousElement();
-            parent.replaceChild(prev, _this.cursor);
-            parent.insertBefore(_this.cursor, prev);
-        }
     };
 };
 
