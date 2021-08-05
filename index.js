@@ -24,7 +24,7 @@ export default class WriteJs {
 
     addImportantStyleToElement = (element = this.element) => {
         if (element.style.width.length === 0) {
-            element.style.width = "90vw";
+            element.style.width = "100%";
         }
         element.style.display = "flex";
         element.style.flexWrap = "wrap";
